@@ -19,9 +19,11 @@ public struct SplineLineRendererSettings
 public class SplineRenderer : MonoBehaviour
 {
     private SplineContainer _splineContainer;
-    private Spline[] _splines;
+    private Spline _spline;
+    private LineRenderer _line;
     private bool _dirty;
     private Vector3[] _points;
+
 
     [SerializeField]
     private SplineLineRendererSettings _lineRendererSettings = new SplineLineRendererSettings()
@@ -30,47 +32,27 @@ public class SplineRenderer : MonoBehaviour
         Subdivisions = 64
     };
 
-    private LineRenderer[] _lines;
-
     private void Awake()
     {
         _splineContainer = GetComponent<SplineContainer>();
-        _splines = _splineContainer.Splines.ToArray();
+        _spline = _splineContainer.Spline;
     }
 
     private void OnEnable()
     {
-        //_splineContainer.Spline.changed += OnSplineChanged;
-
         Spline.Changed += OnSplineChanged;
     }
 
     private void OnDisable()
     {
-        //_splineContainer.Spline.changed -= OnSplineChanged;
-
         Spline.Changed -= OnSplineChanged;
-    }
-
-    private void OnSplineChanged()
-    {
-        if (_splineContainer.Spline.Count > 1)
-        {
-            for (int i = 0, c = _splines.Length; !_dirty && i < c; ++i)
-                if (_splines[i] == _splineContainer.Spline)
-                    _dirty = true;
-
-            SplineUpdate();
-        }
     }
 
     private void OnSplineChanged(Spline spline, int knotIndex, SplineModification modificationType)
     {
         if (_splineContainer.Spline.Count > 1)
         {
-            for (int i = 0, c = _splines.Length; !_dirty && i < c; ++i)
-                if (_splines[i] == _splineContainer.Spline)
-                    _dirty = true;
+            _dirty = true;
 
             SplineUpdate();
         }
@@ -78,19 +60,13 @@ public class SplineRenderer : MonoBehaviour
 
     private void SplineUpdate()
     {
-        if (_lines?.Length != _splines.Length)
+        if (_line == null)
         {
-            if (_lines != null)
-                foreach (var line in _lines) DestroyImmediate(line.gameObject);
+            _line = new LineRenderer();
 
-            _lines = new LineRenderer[_splines.Length];
-
-            for (int i = 0, c = _splines.Length; i < c; ++i)
-            {
-                _lines[i] = new GameObject().AddComponent<LineRenderer>();
-                _lines[i].gameObject.name = $"SplineRenderer {i}";
-                _lines[i].transform.SetParent(transform, true);
-            }
+            _line = new GameObject().AddComponent<LineRenderer>();
+            _line.gameObject.name = "SplineRenderer";
+            _line.transform.SetParent(transform, true);
 
             _dirty = true;
         }
@@ -100,30 +76,27 @@ public class SplineRenderer : MonoBehaviour
         {
             _dirty = true;
             _points = new Vector3[_lineRendererSettings.Subdivisions];
-            foreach (var line in _lines)
-                line.positionCount = _lineRendererSettings.Subdivisions;
+            _line.positionCount = _lineRendererSettings.Subdivisions;
         }
 
-        if (!_dirty)
+        if (_dirty == false)
+        {
             return;
+        }
 
         _dirty = false;
         var trs = _splineContainer.transform.localToWorldMatrix;
 
-        for (int s = 0, c = _splines.Length; s < c; ++s)
+        for (int i = 0; i < _lineRendererSettings.Subdivisions; i++)
         {
-            if (_splines[s].Count < 1)
-                continue;
-
-            for (int i = 0; i < _lineRendererSettings.Subdivisions; i++)
-                _points[i] = math.transform(trs, _splines[s].EvaluatePosition(i / (_lineRendererSettings.Subdivisions - 1f)));
-
-            _lines[s].widthCurve = new AnimationCurve(new Keyframe(0f, _lineRendererSettings.Width));
-            _lines[s].startColor = _lineRendererSettings.StartColor;
-            _lines[s].endColor = _lineRendererSettings.EndColor;
-            _lines[s].material = _lineRendererSettings.Material;
-            _lines[s].useWorldSpace = true;
-            _lines[s].SetPositions(_points);
+            _points[i] = math.transform(trs, _spline.EvaluatePosition(i / (_lineRendererSettings.Subdivisions - 1f)));
         }
+
+        _line.widthCurve = new AnimationCurve(new Keyframe(0f, _lineRendererSettings.Width));
+        _line.startColor = _lineRendererSettings.StartColor;
+        _line.endColor = _lineRendererSettings.EndColor;
+        _line.material = _lineRendererSettings.Material;
+        _line.useWorldSpace = true;
+        _line.SetPositions(_points);
     }
 }
