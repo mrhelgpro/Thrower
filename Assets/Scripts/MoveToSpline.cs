@@ -28,19 +28,6 @@ public class MoveToSpline : MonoBehaviour
         _startRotation = _thisTransform.localRotation;
     }
 
-    private void Update()
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            ResetPosition();
-        }
-
-        if (Input.GetMouseButtonUp(0))
-        {
-            StartMovement(_splineContainer.Spline);
-        }
-    }
-
     private void FixedUpdate()
     {
         if (_actionType == ActionType.MoveToSpline)

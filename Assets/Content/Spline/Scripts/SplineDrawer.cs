@@ -102,6 +102,13 @@ public class SplineDrawer : MonoBehaviour
         }
     }
 
+    public void Clear()
+    {
+        _stroke.Clear();
+        _painting = false;
+        RebuildSpline();
+    }
+
     public void StartDrawing()
     {
         _painting = true;

@@ -53,9 +53,15 @@ public class SplineRenderer : MonoBehaviour
         if (_splineContainer.Spline.Count > 1)
         {
             _dirty = true;
-
             SplineUpdate();
+
+            return;
         }
+
+        if (_line != null)
+        {
+            _line.enabled = false;
+        } 
     }
 
     private void SplineUpdate()
@@ -70,6 +76,8 @@ public class SplineRenderer : MonoBehaviour
 
             _dirty = true;
         }
+
+        _line.enabled = true;
 
         // It's nice to be able to see resolution changes at runtime
         if (_points?.Length != _lineRendererSettings.Subdivisions)
