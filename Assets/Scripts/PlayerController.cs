@@ -1,5 +1,6 @@
 using UnityEngine.Splines;
 using UnityEngine;
+using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class PlayerController : MonoBehaviour
     private ActionType _actionType = ActionType.Idle;
 
     [SerializeField] private Animator _animator;
+    [SerializeField] private CinemachineVirtualCamera _startCamera;
+    [SerializeField] private CinemachineVirtualCamera _throwCamera;
     [SerializeField] private SplineDrawer _splineDrawerDisplay;
     [SerializeField] private SplineDrawer _splineDrawerThrowing;
     [SerializeField] private SplineContainer _splineContainerThrowing;
@@ -70,7 +73,10 @@ public class PlayerController : MonoBehaviour
     // Throwing
     private void idleThrowing()
     {
+        setCamera(_startCamera);
+
         _card.ResetPosition();
+        _animator.CrossFade("Idle", 0.25f);
 
         _actionType = ActionType.Idle;
     }
@@ -78,28 +84,40 @@ public class PlayerController : MonoBehaviour
     private void prepareThrowing()
     {
         startDrawing();
+        _animator.CrossFade("Prepare", 0.25f);
 
         _actionType = ActionType.Prepare;
     }
 
     private void startThrowing()
     {
-        _card.StartMovement(_splineContainerThrowing.Spline);
+        _animator.CrossFade("Throw", 0.025f);
 
         _actionType = ActionType.Throw;
 
-        Invoke(nameof(observationThrowing), 0.5f);
+        Invoke(nameof(observationThrowing), 0.25f);
     }
 
     private void observationThrowing()
     {
+        setCamera(_throwCamera);
+        _card.StartMovement(_splineContainerThrowing.Spline);
         _actionType = ActionType.Observation;
     }
 
     private void resultThrowing()
     {
         _actionType = ActionType.Result;
+        _animator.CrossFade("Idle", 0.5f);
 
-        Invoke(nameof(idleThrowing), 2.0f);
+        Invoke(nameof(idleThrowing), 1.0f);
+    }
+
+    private void setCamera(CinemachineVirtualCamera currentCamera)
+    {
+        _startCamera.Priority = 0;
+        _throwCamera.Priority = 0;
+
+        currentCamera.Priority = 1;
     }
 }
