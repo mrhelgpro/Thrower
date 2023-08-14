@@ -3,10 +3,12 @@ using UnityEngine.Splines;
 
 public class MoveToSpline : MonoBehaviour
 {
-    public enum ActionType { StartPoint, MoveToSpline, DestinationPoint }
+    //public enum ActionType { StartPoint, MoveToSpline, DestinationPoint }
 
-    [SerializeField] private SplineContainer _splineContainer;
+    //[SerializeField] private SplineContainer _splineContainer;
     [SerializeField, Range (0, 20)] private float _moveSpeed = 5;
+
+    private bool _isMovement = false;
 
     // Buffer
     private Transform _thisTransform;
@@ -15,7 +17,7 @@ public class MoveToSpline : MonoBehaviour
     private Quaternion _startRotation;
 
     // Movement Data
-    private ActionType _actionType = ActionType.StartPoint;
+    //private ActionType _actionType = ActionType.StartPoint;
     private Spline _spline;
     private int _currentPointNumber;
     private Vector3 _moveDirection;
@@ -30,7 +32,7 @@ public class MoveToSpline : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_actionType == ActionType.MoveToSpline)
+        if (_isMovement == true)
         {
             moveToSpline();
         }
@@ -38,7 +40,8 @@ public class MoveToSpline : MonoBehaviour
 
     public void ResetPosition()
     {
-        _actionType = ActionType.StartPoint;
+        //_actionType = ActionType.StartPoint;
+        _isMovement = false;
         _thisTransform.parent = _parentTransform;
         _thisTransform.localPosition = _startPosition;
         _thisTransform.localRotation = _startRotation;
@@ -49,11 +52,17 @@ public class MoveToSpline : MonoBehaviour
     {
         if (spline.Count > 1)
         {
-            _actionType = ActionType.MoveToSpline;
+            //_actionType = ActionType.MoveToSpline;
+            _isMovement = true;
             _thisTransform.parent = null;
             _spline = spline;
             _currentPointNumber = 0;
         }
+    }
+
+    public void StopMovement()
+    {
+        _isMovement = false;
     }
 
     // Get Values
@@ -88,10 +97,5 @@ public class MoveToSpline : MonoBehaviour
         }
 
         _moveDirection = getTargetDirection;
-    }
-
-    private void destination()
-    {
-        _actionType = ActionType.DestinationPoint;
     }
 }

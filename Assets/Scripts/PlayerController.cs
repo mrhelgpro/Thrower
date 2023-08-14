@@ -3,13 +3,14 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    enum ActionType { Menu, Idle, Prepare, Throw, Observation }
+    enum ActionType { Menu, Idle, Prepare, Throw, Observation, Result }
     private ActionType _actionType = ActionType.Idle;
 
+    [SerializeField] private Animator _animator;
     [SerializeField] private SplineDrawer _splineDrawerDisplay;
     [SerializeField] private SplineDrawer _splineDrawerThrowing;
     [SerializeField] private SplineContainer _splineContainerThrowing;
-    [SerializeField] private MoveToSpline _moveToSpline;
+    [SerializeField] private Card _card;
 
     private void Update()
     {
@@ -20,13 +21,14 @@ public class PlayerController : MonoBehaviour
                 prepareThrowing();
             }
         }
-
-        if (Input.GetMouseButtonUp(0))
+        else if (_actionType == ActionType.Prepare)
         {
-            endDrawing();
+            holdDrawing();
 
-            if (_actionType == ActionType.Prepare)
+            if (Input.GetMouseButtonUp(0))
             {
+                endDrawing();
+
                 if (_splineContainerThrowing.Spline.Count > 1)
                 {
                     startThrowing();
@@ -37,14 +39,19 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-
-        holdDrawing();
+        else if (_actionType == ActionType.Observation)
+        {
+            if (_card.IsFinal == true)
+            {
+                resultThrowing();
+            }
+        }
     }
 
     // Drawing
     private void startDrawing()
     {
-        _moveToSpline.ResetPosition();
+        _card.ResetPosition();
         _splineDrawerDisplay.StartDrawing();
         _splineDrawerThrowing.StartDrawing();
     }
@@ -63,7 +70,7 @@ public class PlayerController : MonoBehaviour
     // Throwing
     private void idleThrowing()
     {
-        _moveToSpline.ResetPosition();
+        _card.ResetPosition();
 
         _actionType = ActionType.Idle;
     }
@@ -77,7 +84,7 @@ public class PlayerController : MonoBehaviour
 
     private void startThrowing()
     {
-        _moveToSpline.StartMovement(_splineContainerThrowing.Spline);
+        _card.StartMovement(_splineContainerThrowing.Spline);
 
         _actionType = ActionType.Throw;
 
@@ -87,6 +94,11 @@ public class PlayerController : MonoBehaviour
     private void observationThrowing()
     {
         _actionType = ActionType.Observation;
+    }
+
+    private void resultThrowing()
+    {
+        _actionType = ActionType.Result;
 
         Invoke(nameof(idleThrowing), 2.0f);
     }
