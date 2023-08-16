@@ -6,30 +6,25 @@ using UnityEngine.Splines;
 
 public class SplineDrawer : MonoBehaviour
 {
-    public enum PositionType { Display, Surface }
+    private enum PositionType { Display, Surface }
     
-    [SerializeField]
-    private PositionType _positionType = PositionType.Display;
+    [SerializeField] private PositionType positionType = PositionType.Display;
 
     // The minimum amount of cursor movement to be considered a new sample.
     const float StrokeDeltaThreshold = 0.1f;
 
     // Point reduction epsilon determines how aggressive the point reduction algorithm is when removing redundant points. 
-    [SerializeField, Range(0f, 1f)]
-    private float _pointReductionEpsilon = 0.15f;
+    [SerializeField, Range(0f, 1f)] private float pointReductionEpsilon = 0.15f;
 
     // Tension affects how "curvy" splines are at knots. 0 is a sharp corner, 1 is maximum curvitude.
-    [SerializeField, Range(0f, 1f)]
-    private float _splineTension = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float splineTension = 0.25f;
 
-    [SerializeField]
-    private LayerMask _layerMask;
-    [SerializeField]
-    private bool _testDrawing = false;
+    [SerializeField] private LayerMask layerMask;
+    [SerializeField] private bool testDrawing = false;
 
     private Camera _camera;
-    private List<float3> _stroke = new List<float3>(1024);
-    private List<float3> _reduced = new List<float3>(512);
+    private readonly List<float3> _stroke = new List<float3>(1024);
+    private readonly List<float3> _reduced = new List<float3>(512);
     private bool _painting;
     private Vector3 _lastMousePosition;
 
@@ -41,7 +36,7 @@ public class SplineDrawer : MonoBehaviour
     private void RebuildSpline()
     {
         // Before setting spline knots, reduce the number of sample points.
-        SplineUtility.ReducePoints(_stroke, _reduced, _pointReductionEpsilon);
+        SplineUtility.ReducePoints(_stroke, _reduced, pointReductionEpsilon);
 
         Spline spline = GetComponent<SplineContainer>().Spline;
 
@@ -57,7 +52,7 @@ public class SplineDrawer : MonoBehaviour
 
         // Sets the tension parameter for all knots. Note that the "Tension" parameter is only applicable to
         // "Auto Smooth" mode knots.
-        spline.SetAutoSmoothTension(all, _splineTension);
+        spline.SetAutoSmoothTension(all, splineTension);
     }
 
     private void AddPoint()
@@ -65,7 +60,7 @@ public class SplineDrawer : MonoBehaviour
         Vector2 inputMousePosition = Input.mousePosition;
         _lastMousePosition = inputMousePosition;
 
-        if (_positionType == PositionType.Display)
+        if (positionType == PositionType.Display)
         {
             Vector3 worldPoint = _lastMousePosition;
             worldPoint.z = 1.0f;
@@ -75,7 +70,7 @@ public class SplineDrawer : MonoBehaviour
         {
             RaycastHit hit;
 
-            if (Physics.Raycast(_camera.ScreenPointToRay(inputMousePosition), out hit, Mathf.Infinity, _layerMask))
+            if (Physics.Raycast(_camera.ScreenPointToRay(inputMousePosition), out hit, Mathf.Infinity, layerMask))
             {
                 _stroke.Add(hit.point);
             }
@@ -86,7 +81,7 @@ public class SplineDrawer : MonoBehaviour
 
     private void Update()
     {
-        if (_testDrawing == true)
+        if (testDrawing == true)
         {
             if (Input.GetMouseButtonDown(0))
             {

@@ -4,15 +4,14 @@ using UnityEngine;
 
 public class Collectable : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField] private GameObject _skin;
+    [SerializeField] private GameObject _effect;
 
-    // Update is called once per frame
-    void Update()
+    public void Interaction()
     {
+        _skin.SetActive(false);
+        _effect.SetActive(true);
         
+        Destroy(gameObject, 1.0f);
     }
 }

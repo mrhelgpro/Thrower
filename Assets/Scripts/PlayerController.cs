@@ -1,21 +1,18 @@
 using UnityEngine.Splines;
 using UnityEngine;
-using Cinemachine;
 
 public class PlayerController : MonoBehaviour
 {
-    enum ActionType { Menu, Idle, Prepare, Throw, Observation, Result }
-    private ActionType _actionType = ActionType.Idle;
+    private enum ActionType { Menu, Idle, Prepare, Throw, Observation, Result }
+    private ActionType _actionType = ActionType.Menu;
 
-    [SerializeField] private Animator _animator;
-    [SerializeField] private CinemachineBrain _mainCameraBrain;
-    [SerializeField] private CinemachineVirtualCamera _startCamera;
-    [SerializeField] private CinemachineVirtualCamera _throwCamera;
-    [SerializeField] private CinemachineVirtualCamera _finalCamera;
-    [SerializeField] private SplineDrawer _splineDrawerDisplay;
-    [SerializeField] private SplineDrawer _splineDrawerThrowing;
-    [SerializeField] private SplineContainer _splineContainerThrowing;
-    [SerializeField] private Card _card;
+    [SerializeField] private Animator animator;
+    [SerializeField] private SplineRenderer splineRendererDisplay;
+    [SerializeField] private SplineDrawer splineDrawerDisplay;
+    [SerializeField] private SplineDrawer splineDrawerThrowing;
+    [SerializeField] private SplineContainer splineContainerThrowing;
+    [SerializeField] private Card card;
+    [SerializeField] private GameObject warpEffect;
 
     private void Update()
     {
@@ -23,105 +20,141 @@ public class PlayerController : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                prepareThrowing();
+                PrepareThrowing();
             }
         }
         else if (_actionType == ActionType.Prepare)
         {
-            holdDrawing();
+            HoldDrawing();
 
             if (Input.GetMouseButtonUp(0))
             {
-                endDrawing();
+                EndDrawing();
 
-                if (_splineContainerThrowing.Spline.Count > 1)
+                if (splineContainerThrowing.Spline.Count > 1)
                 {
-                    startThrowing();
+                    StartThrowing();
                 }
                 else
                 {
-                    idleThrowing();
+                    IdleThrowing();
                 }
             }
         }
         else if (_actionType == ActionType.Observation)
         {
-            if (_card.IsFinal == true)
+            if (card.IsFinal == true)
             {
-                resultThrowing();
+                ResultThrowing();
             }
         }
     }
 
-    // Drawing
-    private void startDrawing()
+    // Gameplay
+    public void MenuGame()
     {
-        _card.ResetPosition();
-        _splineDrawerDisplay.StartDrawing();
-        _splineDrawerThrowing.StartDrawing();
-    }
-    private void holdDrawing()
-    {
-        _splineDrawerDisplay.HoldDrawing();
-        _splineDrawerThrowing.HoldDrawing();
+        CameraManager.Instance.SetMenuCamera(0.0f);
+        _actionType = ActionType.Menu;
+        
+        animator.Play("Menu");
     }
 
-    private void endDrawing()
+    public void StartGame()
     {
-        _splineDrawerDisplay.Clear();
-        _splineDrawerThrowing.EndDrawing();
+        Invoke(nameof(IdleThrowing), 0.25f);
+        animator.Play("Turn");
     }
-
+    
+    public void ResultGame()
+    {
+        CameraManager.Instance.SetMenuCamera();
+        _actionType = ActionType.Menu;
+        GameManager.Instance.ResultGame();
+    }
+    
     // Throwing
-    private void idleThrowing()
+    private bool IsCorrectLine => splineContainerThrowing.Spline.Count < 4;
+    
+    private void TurnToThrowing()
     {
-        setCamera(_startCamera, 0.0f);
+        Invoke(nameof(IdleThrowing), 0.25f);
+        
+        animator.Play("Turn");
+    }
 
-        _card.ResetPosition();
-        _animator.CrossFade("Idle", 0.25f);
+    private void IdleThrowing()
+    {
+        CameraManager.Instance.SetStartCamera(1.0f);
 
+        warpEffect.SetActive(false);
+        card.ResetPosition();
+        animator.CrossFade("Idle", 0.25f);
         _actionType = ActionType.Idle;
     }
-
-    private void prepareThrowing()
+    
+    private void PrepareThrowing()
     {
-        startDrawing();
-        _animator.CrossFade("Prepare", 0.25f);
-
+        StartDrawing();
+        
+        animator.CrossFade("Prepare", 0.25f);
         _actionType = ActionType.Prepare;
     }
 
-    private void startThrowing()
+    private void StartThrowing()
     {
-        _animator.CrossFade("Throw", 0.025f);
-
+        Invoke(nameof(ObservationThrowing), 0.25f);
+        
+        animator.CrossFade("Throw", 0.025f);
         _actionType = ActionType.Throw;
-
-        Invoke(nameof(observationThrowing), 0.25f);
     }
 
-    private void observationThrowing()
+    private void ObservationThrowing()
     {
-        setCamera(_throwCamera, 1.0f);
-        _card.StartMovement(_splineContainerThrowing.Spline);
+        CameraManager.Instance.SetThrowCamera();
+        
+        warpEffect.SetActive(true);
+        card.StartMovement(splineContainerThrowing.Spline);
         _actionType = ActionType.Observation;
     }
-
-    private void resultThrowing()
+    
+    private void ResultThrowing()
     {
-        _actionType = ActionType.Result;
-        _animator.CrossFade("Idle", 0.5f);
-        setCamera(_finalCamera, 1.5f);
+        CameraManager.Instance.SetFinalCamera(1.5f);
+        Invoke(nameof(ResultGame), 0.25f);
         
-        Invoke(nameof(idleThrowing), 2.0f);
+        _actionType = ActionType.Result;
+        animator.CrossFade("Idle", 0.5f);
+        warpEffect.SetActive(false);
+    }
+    
+    // Drawing
+    private void StartDrawing()
+    {
+        card.ResetPosition();
+        
+        splineRendererDisplay.RendererSettings.StartColor = new Color32(90, 160, 240,0);
+        splineRendererDisplay.RendererSettings.EndColor = new Color32(90, 160, 240,255);
+        splineDrawerDisplay.StartDrawing();
+        splineDrawerThrowing.StartDrawing();
+    }
+    private void HoldDrawing()
+    {
+        if (IsCorrectLine)
+        {
+            splineDrawerDisplay.HoldDrawing();
+            splineDrawerThrowing.HoldDrawing();
+            
+            return;
+        }
+
+        splineRendererDisplay.RendererSettings.StartColor = new Color32(225, 90, 75,0);
+        splineRendererDisplay.RendererSettings.EndColor = new Color32(225, 90, 75,255);
+        splineDrawerThrowing.Clear();
     }
 
-    private void setCamera(CinemachineVirtualCamera currentCamera, float fade = 1.0f)
+    private void EndDrawing()
     {
-        _startCamera.Priority = 0;
-        _throwCamera.Priority = 0;
-
-        currentCamera.Priority = 1;
-        _mainCameraBrain.m_DefaultBlend.m_Time = fade;
+        splineDrawerDisplay.Clear();
+        splineDrawerThrowing.EndDrawing();
     }
 }
