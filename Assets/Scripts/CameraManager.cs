@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
@@ -23,7 +21,7 @@ public class CameraManager : MonoBehaviour
     public void SetThrowCamera(float fade = 1.0f) => SetCamera(throwCamera, fade);
     public void SetFinalCamera(float fade = 1.0f) => SetCamera(finalCamera, fade);
 
-    private void SetCamera(CinemachineVirtualCamera currentCamera, float fade = 1.0f)
+    private void SetCamera(ICinemachineCamera currentCamera, float fade = 1.0f)
     {
         startCamera.Priority = 0;
         throwCamera.Priority = 0;

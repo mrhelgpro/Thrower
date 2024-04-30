@@ -6,12 +6,10 @@ using UnityEngine;
 public class Card : MonoBehaviour
 {
     [SerializeField] private AudioSource flySound;
-    [SerializeField]private AudioSource hitSound;
+    [SerializeField] private AudioSource hitSound;
+
+    private bool _isMovement;
     
-    private bool _isFinal = false;
-    private bool _isMovement = false;
-    
-    // Buffer
     private Transform _thisTransform;
     private TrailRenderer _trailRenderer;
     private MoveToSpline _moveToSpline;
@@ -27,7 +25,7 @@ public class Card : MonoBehaviour
 
     private void Update()
     {
-        if (_isMovement == true)
+        if (_isMovement)
         {
             _thisTransform.Rotate(new Vector3(0, -500, 0) * Time.deltaTime);
         }
@@ -35,28 +33,26 @@ public class Card : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Default"))
+        if (other.gameObject.layer != LayerMask.NameToLayer("Default")) return;
+        
+        Collectable collectable = other.GetComponent<Collectable>();
+
+        if (collectable != null)
         {
-            Collectable collectable = other.GetComponent<Collectable>();
-
-            if (collectable != null)
-            {
-                collectable.Interaction();
-
-                return;
-            }
-            
-            finalPosition();
+            collectable.Interaction();
+            return;
         }
+            
+        FinalPosition();
     }
 
-    public bool IsFinal => _isFinal;
+    public bool IsFinal { get; private set; }
 
     public void ResetPosition()
     {
         _moveToSpline.ResetPosition();
         _isMovement = false;
-        _isFinal = false;
+        IsFinal = false;
         _trailRenderer.enabled = false;
     }
 
@@ -69,9 +65,9 @@ public class Card : MonoBehaviour
         flySound.Play();
     }
 
-    private void finalPosition()
+    private void FinalPosition()
     {
-        _isFinal = true;
+        IsFinal = true;
         _isMovement = false;
         _moveToSpline.StopMovement();
         _trailRenderer.enabled = false;

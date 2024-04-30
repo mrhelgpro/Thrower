@@ -43,7 +43,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (_actionType == ActionType.Observation)
         {
-            if (card.IsFinal == true)
+            if (card.IsFinal)
             {
                 ResultThrowing();
             }
@@ -74,17 +74,10 @@ public class PlayerController : MonoBehaviour
     
     // Throwing
     private bool IsCorrectLine => splineContainerThrowing.Spline.Count < 4;
-    
-    private void TurnToThrowing()
-    {
-        Invoke(nameof(IdleThrowing), 0.25f);
-        
-        animator.Play("Turn");
-    }
 
     private void IdleThrowing()
     {
-        CameraManager.Instance.SetStartCamera(1.0f);
+        CameraManager.Instance.SetStartCamera();
 
         warpEffect.SetActive(false);
         card.ResetPosition();

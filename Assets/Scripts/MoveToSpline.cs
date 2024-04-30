@@ -3,21 +3,15 @@ using UnityEngine.Splines;
 
 public class MoveToSpline : MonoBehaviour
 {
-    //public enum ActionType { StartPoint, MoveToSpline, DestinationPoint }
+    private const float Threshold = 0.1f;
+    
+    [SerializeField, Range (0, 20)] private float moveSpeed = 5;
 
-    //[SerializeField] private SplineContainer _splineContainer;
-    [SerializeField, Range (0, 20)] private float _moveSpeed = 5;
-
-    private bool _isMovement = false;
-
-    // Buffer
+    private bool _isMovement;
     private Transform _thisTransform;
     private Transform _parentTransform;
     private Vector3 _startPosition;
     private Quaternion _startRotation;
-
-    // Movement Data
-    //private ActionType _actionType = ActionType.StartPoint;
     private Spline _spline;
     private int _currentPointNumber;
     private Vector3 _moveDirection;
@@ -32,15 +26,14 @@ public class MoveToSpline : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (_isMovement == true)
+        if (_isMovement)
         {
-            moveToSpline();
+            MoveTo();
         }
     }
 
     public void ResetPosition()
     {
-        //_actionType = ActionType.StartPoint;
         _isMovement = false;
         _thisTransform.parent = _parentTransform;
         _thisTransform.localPosition = _startPosition;
@@ -52,7 +45,6 @@ public class MoveToSpline : MonoBehaviour
     {
         if (spline.Count > 1)
         {
-            //_actionType = ActionType.MoveToSpline;
             _isMovement = true;
             _thisTransform.parent = null;
             _spline = spline;
@@ -64,24 +56,22 @@ public class MoveToSpline : MonoBehaviour
     {
         _isMovement = false;
     }
-
-    // Get Values
-    private Vector3 getTargetPosition => _spline[_currentPointNumber].Position;
-    private Vector3 getTargetDirection => (getTargetPosition - _thisTransform.position).normalized;
-
-    // Private Methods
-    private void moveToSpline()
+    
+    private Vector3 GetTargetPosition => _spline[_currentPointNumber].Position;
+    private Vector3 GetTargetDirection => (GetTargetPosition - _thisTransform.position).normalized;
+    
+    private void MoveTo()
     {
-        _thisTransform.position += _moveDirection * _moveSpeed * Time.fixedDeltaTime;
+        _thisTransform.position += _moveDirection * (moveSpeed * Time.fixedDeltaTime);
 
         if (_currentPointNumber == _spline.Count - 1)
         {
             return;
         }
 
-        float distance = Vector3.Distance(_thisTransform.position, getTargetPosition);
+        float distance = Vector3.Distance(_thisTransform.position, GetTargetPosition);
 
-        if (distance < 0.1f)
+        if (distance < Threshold)
         {
             if (_currentPointNumber < _spline.Count - 1)
             {
@@ -89,13 +79,13 @@ public class MoveToSpline : MonoBehaviour
 
                 if (_currentPointNumber == _spline.Count - 1)
                 {
-                    _moveDirection = getTargetDirection;
+                    _moveDirection = GetTargetDirection;
 
                     return;
                 }
             }
         }
 
-        _moveDirection = getTargetDirection;
+        _moveDirection = GetTargetDirection;
     }
 }
